@@ -26,6 +26,7 @@ var (
 	Delay time.Duration = (time.Second * 5) //How often to check if the main process is alive
 	Footer string //Displayed when program exits
 	Header string //Displayed when program starts
+	ImmediateSpawn bool = true //If the main process should be spawned immediately after writing the Header
 	KillOldMain bool //Set to true if this should be the only existing watchdog parent, killing dangling processes with a matching os.Args[0]
 	Signals []syscall.Signal = []syscall.Signal{syscall.SIGINT, syscall.SIGKILL}
 
@@ -54,17 +55,18 @@ func Parse() bool {
 	for i := 0; i < len(Signals); i++ {
 		signal.Notify(sc, Signals[i])
 	}
-	watchdogTicker := time.Tick(Delay)
 
+	if ImmediateSpawn {
+		mainPID = spawnMain()
+	}
+
+	watchdogTicker := time.Tick(Delay)
 	for {
 		exitWatchdog := false
 		select {
 		case <-watchdogTicker:
 			if !isProcessRunning(mainPID) {
 				mainPID = spawnMain()
-				if mainPID == -1 {
-					panic("watchdog: failed to start new main process")
-				}
 			}
 		case _, ok := <-sc:
 			if ok {
@@ -123,7 +125,7 @@ func spawnMain() int {
 
 	err := mainCmd.Start()
 	if err != nil {
-		return -1
+		panic("watchdog: failed to start new main process")
 	}
 
 	return mainCmd.Process.Pid
