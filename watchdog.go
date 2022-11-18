@@ -4,7 +4,7 @@
 // the imported pflag package from spf13 on GitHub to define extra args.
 // This is how flags are currently processed, and is not expected to
 // change. Wrappers are planned but too bloated for now.
-//It should also expected that the watchdog will panic if it cannot
+//It should also be expected that the watchdog will panic if it cannot
 // spawn a new main process, so please use recover() accordingly.
 */
 package watchdog
